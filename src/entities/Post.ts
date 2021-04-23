@@ -1,5 +1,6 @@
-import { Entity as TOEntity, Column, Index, ManyToOne, JoinColumn, BeforeInsert } from "typeorm";
+import { Entity as TOEntity, Column, Index, ManyToOne, JoinColumn, BeforeInsert, OneToMany } from "typeorm";
 import { makeId, slugify } from "../util/helpers";
+import Comment from "./Comment";
 
 import Entity from './Entity'
 import Sub from "./Sub";
@@ -38,6 +39,9 @@ export default class Post extends Entity {
     @ManyToOne(() => Sub, sub => sub.posts)
     @JoinColumn({ name: 'subName', referencedColumnName: 'name' })
     sub: Sub;
+
+    @OneToMany(() => Comment, comment => comment.post)
+    comments: Array<Comment>;
 
     @BeforeInsert()
     makeIdAndSlug() {

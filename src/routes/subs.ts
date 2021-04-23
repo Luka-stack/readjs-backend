@@ -5,6 +5,7 @@ import Sub from "../entities/Sub";
 import User from "../entities/User";
 import auth from "./auth";
 
+
 const createSub = async (req: Request, res: Response) => {
 
     const { name, title, description } = req.body;

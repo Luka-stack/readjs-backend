@@ -17,12 +17,12 @@ export default class User extends Entity {
 
     @Index()
     @IsEmail()
-    @Column({ unique: true })
+    @Column()
     email: string;
 
     @Index()
     @MinLength(3, { message: 'Username must be at least 3 characters long' })
-    @Column({ unique: true })
+    @Column()
     username: string;
 
     @Column()
