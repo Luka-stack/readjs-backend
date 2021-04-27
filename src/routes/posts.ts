@@ -3,93 +3,91 @@ import Comment from "../entities/Comment";
 import Post from "../entities/Post";
 import Sub from "../entities/Sub";
 
-import auth from '../middleware/auth';
-
+import auth from "../middleware/auth";
+import user from "../middleware/user";
 
 const createPost = async (req: Request, res: Response) => {
-    
-    const { title, body, subName } = req.body;
-    const user = res.locals.user;
+  const { title, body, subName } = req.body;
+  const user = res.locals.user;
 
-    if (title === undefined || title.trim() == '') {
-        return res.status(400).json({ title: 'Title must not be empty' });
-    }
+  if (title === undefined || title.trim() == "") {
+    return res.status(400).json({ title: "Title must not be empty" });
+  }
 
-    try {
-        const sub = await Sub.findOneOrFail({ name: subName });
+  try {
+    const sub = await Sub.findOneOrFail({ name: subName });
 
-        const post = new Post({ title, body, user, sub });
-        await post.save()
+    const post = new Post({ title, body, user, sub });
+    await post.save();
 
-        return res.json(post);
-    } 
-    catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: 'Something went wrong' });
-    }
-}
+    return res.json(post);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};
 
 const getPosts = async (_: Request, res: Response) => {
-    
-    try {
-        const posts = await Post.find({
-            order: { createdAt: 'DESC' }
-        });
+  try {
+    const posts = await Post.find({
+      order: { createdAt: "DESC" },
+      relations: ['comments', 'votes', 'sub' ]
+    });
 
-        return res.json(posts);
-    } 
-    catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: 'Sometinh went wrong' });
+    if (res.locals.user) {
+      posts.forEach(p => p.setUserVote(res.locals.user));
     }
-}
+
+    return res.json(posts);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Sometinh went wrong" });
+  }
+};
 
 const getPost = async (req: Request, res: Response) => {
-    
-    const { identifier, slug } = req.params;
+  const { identifier, slug } = req.params;
 
-    try {
-        const posts = await Post.findOneOrFail(
-            { identifier, slug },
-            { relations: ['sub'] }
-        );
+  try {
+    const posts = await Post.findOneOrFail(
+      { identifier, slug },
+      { relations: ["sub"] }
+    );
 
-        return res.json(posts);
-    } 
-    catch (error) {
-        console.log(error);
-        return res.status(404).json({ error: 'Post not found' });
-    }
-}
+    return res.json(posts);
+  } catch (error) {
+    console.log(error);
+    return res.status(404).json({ error: "Post not found" });
+  }
+};
 
 const commentOnPost = async (req: Request, res: Response) => {
+  const { identifier, slug } = req.params;
+  const body = req.body.body;
 
-    const { identifier, slug } = req.params;
-    const body = req.body.body;
+  try {
+    const post = await Post.findOneOrFail({ identifier, slug });
 
-    try {
-        const post = await Post.findOneOrFail({ identifier, slug });
+    const comment = new Comment({
+      body,
+      user: res.locals.user,
+      post,
+    });
 
-        const comment = new Comment({
-            body,
-            user: res.locals.user,
-            post
-        });
+    await comment.save();
 
-        await comment.save();
-
-        return res.json(comment);
-    } catch (error) {
-        console.log(error);
-        return res.status(404).json({ error: 'Post on found' });
-    }
-}
+    return res.json(comment);
+  } catch (error) {
+    console.log(error);
+    return res.status(404).json({ error: "Post on found" });
+  }
+};
 
 const router = Router();
 
-router.post('/', auth, createPost);
-router.get('/', getPosts);
-router.get('/:identifier/:slug', getPost);
-router.get('/:identifier/:slug/comments', auth, commentOnPost);
+router.post("/", user, auth, createPost);
+router.get("/", user, getPosts);
+router.get("/:identifier/:slug", getPost);
+router.post("/:identifier/:slug/comments", user, auth, commentOnPost);
 
 export default router;
