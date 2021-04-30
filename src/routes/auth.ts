@@ -123,7 +123,7 @@ const logout = (_: Request, res: Response) => {
 const router = Router();
 router.post("/register", register);
 router.post("/login", login);
-router.post("/logout", user, auth, logout);
-router.post("/me", user, auth, me);
+router.get("/logout", user, auth, logout);
+router.get("/me", user, auth, me);
 
 export default router;
