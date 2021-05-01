@@ -43,7 +43,6 @@ const getPosts = async (req: Request, res: Response) => {
       posts.forEach((p) => p.setUserVote(res.locals.user));
     }
 
-    console.log(posts);
     return res.json(posts);
   } catch (error) {
     console.log(error);
